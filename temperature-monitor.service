@@ -1,0 +1,26 @@
+[Unit]
+Description=Hardware Temperature Monitor Service
+Documentation=https://github.com/user/temperature-monitor
+After=network.target graphical-session.target
+Wants=network.target
+
+[Service]
+Type=forking
+User=elid
+Group=elid
+WorkingDirectory=/home/elid/codehub2/ownspaces/tools/template_check
+Environment=DISPLAY=:0
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+ExecStart=/home/elid/codehub2/ownspaces/tools/template_check/start_monitoring.sh --systemd
+ExecStop=/home/elid/codehub2/ownspaces/tools/template_check/stop_monitoring.sh
+PIDFile=/home/elid/codehub2/ownspaces/tools/template_check/temperature-monitor.pid
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# 确保服务有权限访问硬件监控文件
+SupplementaryGroups=lp dialout
+
+[Install]
+WantedBy=graphical.target

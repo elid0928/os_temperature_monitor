@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Temperature Monitor Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <h1>Temperature Test</h1>
+    <div id="status">Loading...</div>
+    <canvas id="chart" width="800" height="400"></canvas>
+    
+    <script>
+        async function loadData() {
+            try {
+                const response = await fetch('/api/temperatures?hours=24');
+                const data = await response.json();
+                
+                document.getElementById('status').innerHTML = `
+                    Data loaded: ${data.data.length} readings, 
+                    Current sensors: ${data.current.length}
+                `;
+                
+                // 简单图表测试
+                const ctx = document.getElementById('chart').getContext('2d');
+                
+                // 按传感器分组数据
+                const datasets = {};
+                data.data.forEach(reading => {
+                    if (!datasets[reading.sensor_name]) {
+                        datasets[reading.sensor_name] = {
+                            label: reading.sensor_name,
+                            data: [],
+                            borderColor: `hsl(${Object.keys(datasets).length * 40}, 70%, 50%)`,
+                            fill: false
+                        };
+                    }
+                    datasets[reading.sensor_name].data.push({
+                        x: reading.timestamp,
+                        y: reading.temperature
+                    });
+                });
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: Object.values(datasets)
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    displayFormats: {
+                                        minute: 'HH:mm',
+                                        hour: 'MM-dd HH:mm'
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Temperature (°C)'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                document.getElementById('status').innerHTML = 'Error: ' + error.message;
+                console.error('Error:', error);
+            }
+        }
+        
+        loadData();
+    </script>
+</body>
+</html>
